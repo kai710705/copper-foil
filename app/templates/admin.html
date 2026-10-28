@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block body %}
+<main id="adminApp" class="container py-4" v-cloak>
+<h1 class="h2">管理者儀表板</h1><p>會員審核與實驗室安全管理</p>
+<div class="row g-3 mb-4"><div v-for="item in indicators" class="col-6 col-lg-3"><div class="glass p-3"><small v-text="item[0]"></small><strong class="d-block fs-2" v-text="item[1]"></strong></div></div></div>
+<section class="glass p-4 mb-4"><h2 class="h4">會員審核</h2>
+<label>篩選狀態<select v-model="filter" @change="loadMembers" class="form-select"><option value="">全部會員</option><option value="pending">待審核</option><option value="approved">已核准</option><option value="rejected">已拒絕</option><option value="disabled">已停用</option></select></label>
+<p v-if="loading" role="status">正在載入會員…</p><p v-else-if="!members.length">沒有符合條件的會員。</p>
+<div v-for="member in members" :key="member.id" class="border-bottom py-3 d-flex flex-wrap justify-content-between gap-3">
+<div><strong v-text="member.username"></strong><p class="mb-0" v-text="member.email"></p><small v-text="(member.role==='admin'?'管理者':'一般使用者')+' · '+stateLabel(member.approval_status)"></small></div>
+<div class="d-flex flex-wrap gap-2 align-items-center">
+<button v-if="member.approval_status==='pending'" class="btn btn-success" :disabled="busy" @click="review(member,'approved')">核准</button>
+<button v-if="member.approval_status==='pending'" class="btn btn-outline-danger" :disabled="busy" @click="review(member,'rejected')">拒絕</button>
+<button v-if="member.approval_status==='approved'" class="btn btn-outline-danger" :disabled="busy" @click="review(member,'disabled')">停用</button>
+<button class="btn btn-outline-secondary" :disabled="busy" @click="history(member)">審核歷程</button></div></div>
+</section>
+<section class="glass p-4 mb-4"><h2 class="h4">實驗室資源</h2>
+<form @submit.prevent="createResource('laboratories',labForm)" class="row g-3 mb-3">
+<label class="col-md-5">名稱<input class="form-control" v-model="labForm.name" required maxlength="100"></label>
+<label class="col-md-5">位置<input class="form-control" v-model="labForm.location" required maxlength="200"></label>
+<div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary" :disabled="busy">新增實驗室</button></div></form>
+<p v-if="!labs.length">尚無實驗室。</p>
+<div v-for="lab in labs" :key="lab.id" class="border-bottom py-3 d-flex flex-wrap justify-content-between gap-2">
+<span><strong v-text="lab.name"></strong> · <span v-text="lab.location"></span> · <span v-text="lab.active?'啟用':'停用'"></span></span>
+<div class="d-flex gap-2"><button class="btn btn-outline-primary btn-sm" :disabled="busy" @click="editResource('laboratories',lab)">修改</button><button class="btn btn-outline-secondary btn-sm" :disabled="busy" @click="toggleResource('laboratories',lab)" v-text="lab.active?'停用':'啟用'"></button></div></div>
+</section>
+<section class="glass p-4 mb-4"><h2 class="h4">攝影機資源</h2><p>此為資源登錄，不表示設備已連線。即時主機 CAM 請使用鏡頭串流頁面。</p>
+<form @submit.prevent="createResource('cameras',cameraForm)" class="row g-3 mb-3">
+<label class="col-md-4">名稱<input class="form-control" v-model="cameraForm.name" required maxlength="100"></label>
+<label class="col-md-4">實驗室<select class="form-select" v-model.number="cameraForm.laboratory_id" required><option value="">請選擇</option><option v-for="lab in labs.filter(l=>l.active)" :value="lab.id" v-text="lab.name"></option></select></label>
+<label class="col-md-2">設備索引<input class="form-control" type="number" v-model.number="cameraForm.device_index" min="0" step="1" required></label>
+<div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary" :disabled="busy">新增攝影機</button></div></form>
+<p v-if="!cameras.length">尚無攝影機資源。</p>
+<div v-for="camera in cameras" :key="camera.id" class="border-bottom py-3 d-flex flex-wrap justify-content-between gap-2">
+<span><strong v-text="camera.name"></strong> · <span v-text="labName(camera.laboratory_id)"></span> · 索引 <span v-text="camera.device_index"></span> · <span v-text="camera.active?'啟用':'停用'"></span></span>
+<div class="d-flex gap-2"><button class="btn btn-outline-primary btn-sm" :disabled="busy" @click="editResource('cameras',camera)">修改</button><button class="btn btn-outline-secondary btn-sm" :disabled="busy" @click="toggleResource('cameras',camera)" v-text="camera.active?'停用':'啟用'"></button></div></div>
+</section>
+<section class="glass p-4 mb-4" aria-labelledby="auditHeading"><h2 id="auditHeading" class="h4">稽核紀錄</h2>
+<form @submit.prevent="createAudit" class="row g-3 mb-4">
+<label class="col-md-4">區域<input class="form-control" v-model="auditForm.area" required maxlength="200"></label>
+<label class="col-md-4">稽核人員<input class="form-control" v-model="auditForm.inspector" required maxlength="100"></label>
+<label class="col-md-4">改善期限<input class="form-control" type="date" v-model="auditForm.due_date" required></label>
+<label class="col-12">問題與改善事項<textarea class="form-control" v-model="auditForm.issue" required maxlength="2000" rows="3"></textarea></label>
+<div class="col-12"><button class="btn btn-primary" :disabled="busy">新增稽核紀錄</button></div></form>
+<p v-if="loadingAudits" role="status">正在載入稽核紀錄…</p><p v-else-if="!audits.length">目前沒有稽核紀錄。</p>
+<article v-for="audit in audits" :key="audit.id" class="border-bottom py-3 d-flex flex-wrap justify-content-between gap-3">
+<div><strong v-text="audit.area"></strong><p class="mb-1" v-text="audit.issue"></p><small v-text="'稽核人員：'+audit.inspector+' · 改善期限：'+audit.due_date+' · '+stateLabel(audit.status)"></small></div>
+<button v-if="audit.status==='open'" class="btn btn-success align-self-center" :disabled="busy" @click="completeAudit(audit)">標記改善完成</button></article>
+</section>
+<section class="glass p-4 mb-4"><h2 class="h4">工安警示</h2><p>初始化事件為示範，尚未接入自動影像辨識。</p>
+<p v-if="!alerts.length">目前沒有警示。</p><div v-for="alert in alerts" :key="alert.id" class="border-bottom py-3 d-flex flex-wrap justify-content-between gap-2">
+<div><strong v-text="alert.title"></strong><p class="mb-0" v-text="alert.area+' · '+alert.alert_type+' · '+stateLabel(alert.status)"></p><small v-text="alert.description"></small></div>
+<button v-if="alert.status==='open'" class="btn btn-success" :disabled="busy" @click="resolveAlert(alert)">標示已處理</button></div></section>
+</main>
+{% endblock %}
+{% block scripts %}<script src="/static/js/admin.js"></script>{% endblock %}

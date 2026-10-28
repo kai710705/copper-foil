@@ -1,0 +1,11 @@
+.orbit{animation:pulse 5s ease-in-out infinite}
+.mini-calendar{animation:float 4s ease-in-out infinite}
+.safety-mark{width:36px;height:36px;display:grid;place-items:center;background:#3568ff;color:white;border-radius:12px}
+.signal-bars{height:26px;display:flex;gap:5px;align-items:end}
+.signal-bars i{width:8px;border-radius:6px;background:#3568ff;animation:signal 1.2s ease-in-out infinite alternate}
+.signal-bars i:nth-child(1){height:9px}.signal-bars i:nth-child(2){height:15px;animation-delay:.15s}.signal-bars i:nth-child(3){height:22px;animation-delay:.3s}.signal-bars i:nth-child(4){height:14px;animation-delay:.45s}.signal-bars i:nth-child(5){height:20px;animation-delay:.6s}
+@keyframes pulse{50%{transform:scale(1.06);opacity:.6}}
+@keyframes float{50%{translate:0 -8px}}
+@keyframes signal{to{opacity:.35}}
+@media(max-width:760px){.hero{grid-template-columns:1fr}.calendar-art{height:280px}.features,.grid,.stats{grid-template-columns:1fr}.shell{padding:35px 18px}.hero h1{font-size:45px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}

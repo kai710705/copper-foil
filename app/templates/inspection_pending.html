@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf }}">
+  <title>待人工處理｜銅箔瑕疵檢測</title>
+  <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/video-tailwind.css">
+</head>
+<body>
+<nav><a class="brand" href="/">台南大學實驗室監控系統</a><div><a href="/video">返回鏡頭</a><a href="/">返回首頁</a></div></nav>
+<main id="pendingApp" class="container py-5">
+  <section class="rounded-2xl bg-white/70 backdrop-blur-xl p-6 shadow-lg border border-white">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div><h1 class="h3 mb-1">待人工處理</h1><p class="mb-0 text-muted">確認瑕疵後，請標記處理結果。</p></div>
+      <div class="d-flex gap-2"><button class="btn btn-outline-primary" @click="load" :disabled="loading">重新整理</button><a class="btn btn-outline-success" href="/api/v1/inspections/training-export">匯出訓練資料</a></div>
+    </div>
+    <p v-if="error" class="alert alert-danger mt-4" v-text="error"></p>
+    <p v-if="!loading && !items.length" class="alert alert-success mt-4">目前沒有待人工處理紀錄。</p>
+    <div class="row g-4 mt-1">
+      <article v-for="item in items" :key="item.id" class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <img :src="'/api/v1/inspections/' + item.id + '/image'" class="card-img-top inspection-image" alt="瑕疵檢測截圖">
+          <div class="card-body">
+            <h2 class="h5" v-text="'檢測 #' + item.id"></h2>
+            <dl class="row small mb-3">
+              <dt class="col-5">檢測時間</dt><dd class="col-7" v-text="item.captured_at"></dd>
+              <dt class="col-5">瑕疵類型</dt><dd class="col-7" v-text="item.defect_type || '未分類'" ></dd>
+              <dt class="col-5">最高信心度</dt><dd class="col-7" v-text="(item.confidence * 100).toFixed(1) + '%'" ></dd>
+              <dt class="col-5">瑕疵數量</dt><dd class="col-7" v-text="item.detections.length"></dd>
+            </dl>
+            <div class="d-flex flex-wrap gap-2">
+              <button class="btn btn-success btn-sm" @click="review(item.id,'discarded')" :disabled="busyId===item.id">已剔除</button>
+              <button class="btn btn-outline-secondary btn-sm" @click="review(item.id,'false_positive')" :disabled="busyId===item.id">誤判</button>
+              <button class="btn btn-warning btn-sm" @click="review(item.id,'reinspect')" :disabled="busyId===item.id">待複檢</button>
+              <a class="btn btn-outline-primary btn-sm" :href="'/inspections/' + item.id + '/annotate'">編輯標註</a>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+<script src="/static/vendor/vue.global.prod.js"></script><script src="/static/vendor/axios.min.js"></script><script src="/static/vendor/sweetalert2.all.min.js"></script>
+<script src="/static/js/http.js?v=20261026-1"></script><script src="/static/js/inspection-pending.js?v=20261026-1"></script>
+</body></html>

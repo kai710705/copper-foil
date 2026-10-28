@@ -1,0 +1,2 @@
+const homeRoot=document.querySelector('#homeApp');
+if(homeRoot){Vue.createApp({data:()=>({authenticated:homeRoot.dataset.authenticated==='true',stats:{today_inspections:0,today_defects:0,pending_reviews:0},recent:[],loading:false}),methods:{async load(){if(!this.authenticated||this.loading)return;this.loading=true;try{const [stats,records]=await Promise.all([window.http.get('/inspections/stats'),window.http.get('/inspections')]);this.stats=stats.data.data;this.recent=records.data.data.slice(0,5);}finally{this.loading=false;}}},mounted(){this.load();}}).mount(homeRoot);}

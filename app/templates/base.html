@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<title>台南大學實驗室監控系統</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ui-motion.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/video-tailwind.css') }}">
+</head><body>
+<nav class="d-flex flex-wrap gap-2 h-auto py-3"><a class="brand" href="/">◈ 台南大學實驗室監控系統</a>
+<div class="d-flex flex-wrap gap-2 align-items-center">
+{% if user %}<span>{{ user['username'] }}</span><a href="/video">鏡頭串流</a>
+{% if user['role']=='admin' %}<a href="/admin">管理後台</a>{% endif %}
+<a href="/password">變更密碼</a><form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-secondary btn-sm">登出</button></form>
+{% else %}<a href="/login">登入</a><a href="/register">註冊</a>{% endif %}</div></nav>
+{% with messages=get_flashed_messages(with_categories=true) %}{% for c,m in messages %}<p role="status" class="container alert {{ 'alert-danger' if c=='error' else 'alert-success' }} mt-3">{{m}}</p>{% endfor %}{% endwith %}
+{% block body %}{% endblock %}
+<script src="{{ url_for('static', filename='vendor/vue.global.prod.js') }}"></script><script src="{{ url_for('static', filename='vendor/axios.min.js') }}"></script><script src="{{ url_for('static', filename='vendor/sweetalert2.all.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/http.js') }}"></script>{% block scripts %}{% endblock %}
+</body></html>

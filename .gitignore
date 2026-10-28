@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+instance/*.sqlite
+instance/backups/
+instance/inspections/
+frontend/node_modules/
+tests/tmp*/
+tmp/
+.agents/
+.codex/

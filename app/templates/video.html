@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf }}">
+  <title>鏡頭監控｜台南大學實驗室監控系統</title>
+  <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/video-tailwind.css">
+  <style>.metric-card{height:100%;padding:16px 18px;border:1px solid #dbe5f2;border-radius:16px;background:#ffffffb8}.metric-card span{display:block;color:#64748b;font-size:13px;margin-bottom:6px}.metric-card strong{display:block;font-size:28px;line-height:1.1}.metric-good{color:#198754}.metric-danger{color:#dc3545}.metric-muted{color:#64748b}</style>
+</head>
+<body>
+<nav><a class="brand" href="/">台南大學實驗室監控系統</a><div><a href="/inspections/pending">待人工處理</a><a href="/">返回首頁</a></div></nav>
+<main id="videoApp" class="container py-5">
+  <section class="rounded-2xl bg-white/70 backdrop-blur-xl p-6 shadow-lg border border-white">
+    <h1 class="h3">銅箔瑕疵檢測</h1>
+    <p>鏡頭持續記錄產線，檢測結果提供後段人工複檢與剔除，不會自動停止產線。</p>
+    <div class="row g-3 mb-4 dashboard-metrics">
+      <div class="col-6 col-xl-3"><div class="metric-card"><span>鏡頭狀態</span><strong :class="active?'metric-good':'metric-muted'" v-text="active?'運作中':'未啟動'"></strong></div></div>
+      <div class="col-6 col-xl-3"><div class="metric-card"><span>目前瑕疵數</span><strong :class="analysis && analysis.result==='fail'?'metric-danger':'metric-good'" v-text="analysis ? analysis.detections.length : 0"></strong></div></div>
+      <div class="col-6 col-xl-3"><div class="metric-card"><span>今日檢測</span><strong v-text="stats.today_inspections"></strong></div></div>
+      <div class="col-6 col-xl-3"><div class="metric-card"><span>待人工處理</span><strong :class="stats.pending_reviews?'metric-danger':'metric-good'" v-text="stats.pending_reviews"></strong></div></div>
+    </div>
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="bg-dark rounded overflow-hidden d-flex align-items-center justify-content-center position-relative" style="min-height:320px">
+          <img ref="streamImage" v-if="streamUrl" :src="streamUrl" class="w-100 position-relative" style="z-index:1" alt="鏡頭即時影像" @load="drawDetections" @error="imageError">
+          <canvas ref="overlay" v-show="streamUrl" class="position-absolute pe-none" style="z-index:2;display:block" aria-hidden="true"></canvas>
+          <span v-if="!streamUrl" class="text-white p-4">尚未顯示影像，請啟動鏡頭。</span>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <h2 class="h5">鏡頭與串流狀態</h2>
+        <p role="status" aria-live="polite" v-text="message"></p>
+        <p v-if="autoAnalyzing" class="small text-info">自動分析中，瑕疵框會標示在影像上。</p>
+        <dl><dt>鏡頭編號</dt><dd v-text="cameraIndex"></dd><dt>已擷取影格</dt><dd v-text="frames"></dd></dl>
+        <button class="btn btn-primary me-2" @click="start" :disabled="busy || active || !canControl">啟動鏡頭</button>
+        <button class="btn btn-secondary" @click="stop" :disabled="busy || !active || !canControl">停止串流</button>
+        <button class="btn btn-warning mt-2" @click="analyze" :disabled="busy || !active || !canControl">分析目前影像</button>
+        <div v-if="analysis" class="mt-4" aria-live="polite">
+          <h3 class="h6">銅箔檢測結果</h3>
+          <p>判定：<strong v-text="analysis.result"></strong>，瑕疵數量：<strong v-text="analysis.detections.length"></strong></p>
+          <ul class="list-group small">
+            <li v-for="item in analysis.detections" :key="item.defect_type + item.confidence" class="list-group-item d-flex justify-content-between">
+              <span v-text="item.defect_type"></span><strong v-text="item.confidence"></strong>
+            </li>
+          </ul>
+          <small class="text-muted">紀錄已加入待人工處理清單，請由人員確認。</small>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="/static/vendor/vue.global.prod.js"></script>
+<script src="/static/vendor/axios.min.js"></script>
+<script src="/static/vendor/sweetalert2.all.min.js"></script>
+<script src="/static/js/http.js?v=20261026-1"></script>
+<script src="/static/js/video.js?v=20261026-3"></script>
+</body></html>

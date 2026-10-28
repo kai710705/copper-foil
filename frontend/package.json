@@ -1,0 +1,1 @@
+{"private":true,"scripts":{"build":"tailwindcss -c tailwind.config.cjs -i video.css -o ../app/static/css/video-tailwind.css --minify"},"devDependencies":{"tailwindcss":"3.4.17"}}

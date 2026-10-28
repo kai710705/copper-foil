@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block body %}
+<main id="authApp" class="auth glass" data-mode="{{ mode }}" v-cloak>
+  <div class="logo-orb" aria-hidden="true">◈</div>
+  <h1>{{ '登入監控系統' if mode=='login' else '申請會員帳號' }}</h1>
+  <p v-if="loading" role="status">正在處理，請稍候…</p>
+  <form @submit.prevent="submit" :aria-busy="loading">
+    <label for="username">帳號<input id="username" v-model.trim="form.username" name="username" required maxlength="50" autocomplete="username"></label>
+    {% if mode=='register' %}
+    <label for="email">Email<input id="email" v-model.trim="form.email" name="email" type="email" required maxlength="254" autocomplete="email"></label>
+    <label for="role">註冊角色<select id="role" v-model="form.role" name="role"><option value="user">一般使用者</option><option value="admin">管理者（需審核）</option></select></label>
+    {% endif %}
+    <label for="password">密碼<input id="password" v-model="form.password" name="password" type="password" required :minlength="mode==='register'?8:1" maxlength="128" :autocomplete="mode==='login'?'current-password':'new-password'"></label>
+    <button :disabled="loading">{{ '登入' if mode=='login' else '送出註冊申請' }}</button>
+  </form>
+  {% if mode=='register' %}<p>註冊後需等待管理者審核，核准後才可登入。</p>{% endif %}
+  <p><a href="{{ '/register' if mode=='login' else '/login' }}">{{ '還沒有帳號？立即註冊' if mode=='login' else '已有帳號？返回登入' }}</a></p>
+</main>
+{% endblock %}
+{% block scripts %}<script src="/static/js/auth.js"></script>{% endblock %}
